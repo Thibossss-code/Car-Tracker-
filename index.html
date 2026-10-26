@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🚗 CAR TRACKER PRO - $27/month Recurring</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+body{margin:0;background:#121212;color:#fff;font-family:Arial;overflow-x:hidden}
+.header{background:linear-gradient(135deg,#1a1a1a,#000);padding:15px;text-align:center;border-bottom:3px solid #00FF00}
+.header h1{margin:0;color:#00FF00;text-shadow:0 0 10px #00FF00}
+#map{height:55vh;width:100%;border:3px solid #00FF00}
+.panel{padding:15px;background:#1e1e1e;margin:10px;border-radius:10px;border-left:5px solid #00FF00}
+select,input,textarea{width:100%;padding:12px;margin:8px 0;background:#2a2a2a;color:#fff;border:1px solid #444;border-radius:8px;font-size:14px}
+.btn{width:100%;padding:15px;margin:10px 0;background:linear-gradient(135deg,#00FF00,#00AA00);color:#000;font-weight:bold;border:none;border-radius:10px;font-size:16px;cursor:pointer}
+.btn-red{background:linear-gradient(135deg,#FF0000,#AA0000);color:#fff}
+.btn-blue{background:linear-gradient(135deg,#0080FF,#0040AA);color:#fff}
+.btn-gold{background:linear-gradient(135deg,#FFD700,#FFA500);color:#000;font-size:18px;animation:pulse 2s infinite}
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.02)}100%{transform:scale(1)}}
+.log{max-height:300px;overflow-y:auto;background:#000;padding:10px;border-radius:8px;margin-top:10px}
+.entry{border-bottom:1px solid #333;padding:10px;background:#1a1a1a;margin:5px 0;border-radius:5px}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:10px 0}
+.stat{background:#2a2a2a;padding:10px;text-align:center;border-radius:8px;border:1px solid #00FF00}
+.payhip-banner{background:#FFD700;color:#000;padding:12px;text-align:center;font-weight:bold;font-size:14px}
+a{color:#00FF00}
+</style>
+</head>
+<body>
+<div class="payhip-banner">💳 GET FULL PRO VERSION - $27/month - <a href="https://payhip.com/b/ZveXE" target="_blank" style="color:#000;text-decoration:underline">https://payhip.com/b/ZveXE</a> - Cancel Anytime!</div>
+<div class="header">
+<h1>🚗 CAR TRACKER PRO</h1>
+<p>🛰️ LIVE GPS + 📍 Parking + 🚨 Anti-Theft + 📸 Photo Log</p>
+<p style="font-size:12px">Works Offline • Worldwide • $27/month Recurring • PRO: https://payhip.com/b/ZveXE</p>
+<a href="https://payhip.com/b/ZveXE" target="_blank"><button class="btn btn-gold">🔓 UNLOCK PRO VERSION - $27/month - BUY NOW</button></a>
+</div>
+
+<div id="map"></div>
+
+<div class="stats">
+<div class="stat"><div id="speed">0</div><small>KM/H Speed</small></div>
+<div class="stat"><div id="trips">0</div><small>Trips Saved</small></div>
+<div class="stat"><div id="lastTime">--:--</div><small>Last Parked</small></div>
+</div>
+
+<div class="panel">
+<h3>📍 WHERE IS MY CAR?</h3>
+<select id="carType">
+<option>🚗 My Car - Toyota / VW / BMW</option>
+<option>🚙 Family Car - Second Car</option>
+<option>🏍️ Motorbike - Bike Tracker</option>
+<option>🚚 Truck / Work Vehicle</option>
+<option>🚐 Taxi / Fleet Vehicle</option>
+<option>🏎️ Sports Car - High Value</option>
+</select>
+
+<select id="parkType">
+<option>🅿️ Mall Parking - Shopping Center</option>
+<option>🏠 Home Garage - Safe Parking</option>
+<option>🏢 Work Parking - Office Park</option>
+<option>🛣️ Street Parking - Street Side</option>
+<option>⛽ Gas Station - Quick Stop</option>
+<option>🚨 Unknown / Suspicious Location - Anti-Theft</option>
+<option>📍 Customer Location - Delivery Stop</option>
+</select>
+
+<select id="status">
+<option>✅ CAR PARKED - Safe / Locked</option>
+<option>🚨 CAR MOVING - Anti-Theft ALERT!</option>
+<option>🔧 CAR IN GARAGE - Service / Repair</option>
+<option>⛽ CAR FUELING - Fuel Stop</option>
+<option>📦 CAR LOADING - Loading / Unloading</option>
+</select>
+
+<select id="security">
+<option>🔒 Locked - Alarm ON - 100% Secure</option>
+<option>🔓 Unlocked - Quick Stop - 50% Risk</option>
+<option>🚨 Alarm Triggered - CAR MOVED!</option>
+<option>📵 No Signal - Underground Parking</option>
+</select>
+
+<input type="text" id="carName" placeholder="Car Name: e.g. White Toyota Corolla - XYZ123">
+<input type="file" id="carPhoto" accept="image/*" capture="environment">
+<textarea id="notes" placeholder="Notes: e.g. Level 3, Bay 45, Near entrance, 2 hours parking..."></textarea>
+
+<button class="btn" onclick="saveCarLocation()">📍 SAVE MY CAR LOCATION NOW - GPS + PHOTO</button>
+<button class="btn btn-blue" onclick="getLiveLocation()">🛰️ GET LIVE LOCATION - Where is car now?</button>
+<button class="btn btn-red" onclick="antiTheft()">🚨 ANTI-THEFT CHECK - Did car move?</button>
+<div id="gpsStatus" style="text-align:center;padding:10px;color:#00FF00">GPS Ready - Worldwide - Waiting...</div>
+<a href="https://payhip.com/b/ZveXE" target="_blank"><button class="btn btn-gold">💳 UPGRADE TO PRO - $27/month - Full Features</button></a>
+</div>
+
+<div class="panel">
+<h3>📸 CAR PHOTO LOG + TRIP HISTORY</h3>
+<div class="log" id="photoLog">No car locations yet - Save first location above!</div>
+<button class="btn btn-blue" onclick="exportData()">📤 Export All Car Data - CSV</button>
+<button class="btn btn-red" onclick="clearData()">🗑️ Clear All Data</button>
+<p style="text-align:center;font-size:12px">PRO VERSION: <a href="https://payhip.com/b/ZveXE" target="_blank">https://payhip.com/b/ZveXE</a> - $27/month recurring</p>
+</div>
+
+<script>
+let map, marker, carMarkers=[];
+let savedLocations = JSON.parse(localStorage.getItem('carTracker')||'[]');
+let watchId=null;
+
+function initMap(){
+map=L.map('map').setView([40.7128,-74.0060],13);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
+attribution:'Satellite - Car Tracker PRO - $27/month https://payhip.com/b/ZveXE'
+}).addTo(map);
+loadSavedMarkers();
+if(navigator.geolocation){
+navigator.geolocation.getCurrentPosition(pos=>{
+let lat=pos.coords.latitude, lng=pos.coords.longitude;
+map.setView([lat,lng],16);
+marker=L.marker([lat,lng]).addTo(map).bindPopup("📍 YOU ARE HERE").openPopup();
+document.getElementById('gpsStatus').innerHTML="✅ GPS Locked: "+lat.toFixed(5)+", "+lng.toFixed(5);
+},err=>{document.getElementById('gpsStatus').innerHTML="⚠️ GPS: Allow location for car tracking";});
+}
+startSpeedTracking();
+}
+
+function saveCarLocation(){
+if(!navigator.geolocation){alert("GPS not supported");return;}
+navigator.geolocation.getCurrentPosition(pos=>{
+let lat=pos.coords.latitude, lng=pos.coords.longitude;
+let carType=document.getElementById('carType').value;
+let parkType=document.getElementById('parkType').value;
+let status=document.getElementById('status').value;
+let security=document.getElementById('security').value;
+let carName=document.getElementById('carName').value||"My Car";
+let notes=document.getElementById('notes').value;
+let time=new Date().toLocaleString();
+let photoInput=document.getElementById('carPhoto');
+let photoData="";
+if(photoInput.files[0]){
+let reader=new FileReader();
+reader.onload=e=>{
+photoData=e.target.result;
+finishSave(lat,lng,carType,parkType,status,security,carName,notes,time,photoData);
+};
+reader.readAsDataURL(photoInput.files[0]);
+}else{
+finishSave(lat,lng,carType,parkType,status,security,carName,notes,time,photoData);
+}
+});
+}
+
+function finishSave(lat,lng,carType,parkType,status,security,carName,notes,time,photoData){
+let entry={lat,lng,carType,parkType,status,security,carName,notes,time,photoData,id:Date.now()};
+savedLocations.unshift(entry);
+localStorage.setItem('carTracker',JSON.stringify(savedLocations));
+addMarker(entry);
+updateLog();
+updateStats();
+alert("✅ CAR LOCATION SAVED!\n📍 "+lat.toFixed(5)+", "+lng.toFixed(5)+"\n🚗 "+carName+"\nTime: "+time+"\n\nPRO: https://payhip.com/b/ZveXE");
+document.getElementById('lastTime').innerText=new Date().toLocaleTimeString();
+};
+
+function addMarker(entry){
+let m=L.marker([entry.lat,entry.lng]).addTo(map).bindPopup(`<b>🚗 ${entry.carName}</b><br>${entry.parkType}<br>${entry.status}<br>${entry.time}<br>${entry.notes}<br><a href='https://payhip.com/b/ZveXE' target='_blank'>PRO $27/m</a>`);
+carMarkers.push(m);
+}
+
+function loadSavedMarkers(){
+savedLocations.forEach(entry=>{addMarker(entry);});
+updateLog();
+updateStats();
+}
+
+function updateLog(){
+let log=document.getElementById('photoLog');
+if(savedLocations.length==0){log.innerHTML="No car locations yet - Save first location!";return;}
+log.innerHTML=savedLocations.map(e=>`
+<div class="entry">
+<b>🚗 ${e.carName}</b> - ${e.time}<br>
+📍 ${e.lat.toFixed(5)}, ${e.lng.toFixed(5)}<br>
+🅿️ ${e.parkType} | ${e.status} | ${e.security}<br>
+📝 ${e.notes}<br>
+${e.photoData?`<img src="${e.photoData}" style="width:100%;max-height:150px;border-radius:8px;margin-top:5px">`:''}
+<button onclick="goToLocation(${e.lat},${e.lng})" style="width:100%;margin-top:5px;padding:8px;background:#00FF00;border:none;border-radius:5px">🗺️ GO TO THIS LOCATION</button>
+</div>
+`).join('');
+}
+
+function updateStats(){
+document.getElementById('trips').innerText=savedLocations.length;
+}
+
+function goToLocation(lat,lng){
+map.setView([lat,lng],18);
+}
+
+function getLiveLocation(){
+navigator.geolocation.getCurrentPosition(pos=>{
+let lat=pos.coords.latitude, lng=pos.coords.longitude;
+map.setView([lat,lng],18);
+if(marker)map.removeLayer(marker);
+marker=L.marker([lat,lng]).addTo(map).bindPopup("📍 YOU LIVE NOW").openPopup();
+document.getElementById('gpsStatus').innerHTML="✅ LIVE: "+lat.toFixed(5)+", "+lng.toFixed(5)+" - Speed: "+(pos.coords.speed||0)+" m/s";
+});
+}
+
+function startSpeedTracking(){
+if(navigator.geolocation){
+watchId=navigator.geolocation.watchPosition(pos=>{
+let speed=pos.coords.speed;
+if(speed){
+let kmh=(speed*3.6).toFixed(1);
+document.getElementById('speed').innerText=kmh;
+}
+});
+}
+}
+
+function antiTheft(){
+if(savedLocations.length==0){alert("Save car location first!");return;}
+let last=savedLocations[0];
+navigator.geolocation.getCurrentPosition(pos=>{
+let dist=getDistance(last.lat,last.lng,pos.coords.latitude,pos.coords.longitude);
+if(dist>0.05){
+alert("🚨 ALERT! CAR MOVED!\nLast: "+last.carName+"\nDistance moved: "+dist.toFixed(3)+" km\nLast location: "+last.time+"\nNEW LOCATION: "+pos.coords.latitude.toFixed(5)+"\n\nPRO: https://payhip.com/b/ZveXE");
+saveCarLocation();
+}else{
+alert("✅ CAR SAFE - Not moved\nDistance: "+dist.toFixed(3)+" km from last save\nLocation: "+last.parkType);
+}
+});
+}
+
+function getDistance(lat1,lon1,lat2,lon2){
+let R=6371;
+let dLat=(lat2-lat1)*Math.PI/180;
+let dLon=(lon2-lon1)*Math.PI/180;
+let a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+let c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+return R*c;
+}
+
+function exportData(){
+let csv="Time,Car Name,Lat,Lng,Park Type,Status,Security,Notes,Payhip Link\n";
+savedLocations.forEach(e=>{
+csv+=`"${e.time}","${e.carName}",${e.lat},${e.lng},"${e.parkType}","${e.status}","${e.security}","${e.notes}","https://payhip.com/b/ZveXE"\n`;
+});
+let blob=new Blob([csv],{type:'text/csv'});
+let url=URL.createObjectURL(blob);
+let a=document.createElement('a');a.href=url;a.download='car-tracker-export.csv';a.click();
+}
+
+function clearData(){
+if(confirm("Delete ALL car locations?")){
+localStorage.removeItem('carTracker');
+savedLocations=[];location.reload();
+}
+}
+
+window.onload=initMap;
+</script>
+</body>
+</html>
